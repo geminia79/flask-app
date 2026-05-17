@@ -12,9 +12,12 @@ class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(500), nullable=False)
     done = db.Column(db.Boolean, default=False)
+    priority = db.Column(db.String(10), default="medium")
+    due_date = db.Column(db.String(10), nullable=True)
 
     def to_dict(self):
-        return {"id": self.id, "text": self.text, "done": self.done}
+        return {"id": self.id, "text": self.text, "done": self.done,
+                "priority": self.priority, "due_date": self.due_date}
 
 
 with app.app_context():
@@ -38,7 +41,9 @@ def add_todo():
     text = data.get("text", "").strip()
     if not text:
         return jsonify({"error": "Text is required"}), 400
-    todo = Todo(text=text)
+    priority = data.get("priority", "medium")
+    due_date = data.get("due_date") or None
+    todo = Todo(text=text, priority=priority, due_date=due_date)
     db.session.add(todo)
     db.session.commit()
     return jsonify(todo.to_dict()), 201

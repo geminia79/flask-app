@@ -3,6 +3,8 @@ let currentFilter = "all";
 
 const form = document.getElementById("todo-form");
 const input = document.getElementById("todo-input");
+const prioritySelect = document.getElementById("priority-select");
+const dueDateInput = document.getElementById("due-date-input");
 const list = document.getElementById("todo-list");
 const emptyMsg = document.getElementById("empty-msg");
 const filterBtns = document.querySelectorAll(".filter-btn");
@@ -13,11 +15,11 @@ async function fetchTodos() {
   render();
 }
 
-async function addTodo(text) {
+async function addTodo(text, priority, due_date) {
   const res = await fetch("/api/todos", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, priority, due_date }),
   });
   if (res.ok) {
     const todo = await res.json();
@@ -55,10 +57,19 @@ function render() {
 
   filtered.forEach((todo) => {
     const li = document.createElement("li");
-    li.className = `todo-item${todo.done ? " done" : ""}`;
+    li.className = `todo-item priority-${todo.priority}${todo.done ? " done" : ""}`;
+    const dueDateHtml = todo.due_date
+      ? `<span class="due-date">Due: ${todo.due_date}</span>`
+      : "";
     li.innerHTML = `
       <input class="todo-checkbox" type="checkbox" ${todo.done ? "checked" : ""} aria-label="Toggle done" />
-      <span class="todo-text">${escapeHtml(todo.text)}</span>
+      <div class="todo-body">
+        <span class="todo-text">${escapeHtml(todo.text)}</span>
+        <div class="todo-meta">
+          <span class="priority-badge priority-${todo.priority}">${todo.priority}</span>
+          ${dueDateHtml}
+        </div>
+      </div>
       <button class="delete-btn" aria-label="Delete task">&#x2715;</button>
     `;
     li.querySelector(".todo-checkbox").addEventListener("change", () => toggleTodo(todo.id));
@@ -77,8 +88,10 @@ form.addEventListener("submit", (e) => {
   e.preventDefault();
   const text = input.value.trim();
   if (text) {
-    addTodo(text);
+    addTodo(text, prioritySelect.value, dueDateInput.value || null);
     input.value = "";
+    dueDateInput.value = "";
+    prioritySelect.value = "medium";
   }
 });
 
